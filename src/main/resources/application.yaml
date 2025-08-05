@@ -10,3 +10,14 @@ spring.ai.mcp.client:
     connections:
       server1:
         url: http://localhost:8081
+
+# OAuth2 Client Configuration
+spring.security.oauth2.client:
+  provider:
+    authserver.issuer-uri: http://localhost:9000
+  registration:
+    authserver-client-credentials:
+      provider: authserver
+      client-id: mcp-client
+      client-secret: mcp-secret
+      authorization-grant-type: client_credentials
