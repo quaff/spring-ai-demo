@@ -1,45 +1,40 @@
 package com.demo.ai;
 
-import java.util.Scanner;
-
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
 import org.springframework.ai.tool.ToolCallbackProvider;
-import org.springframework.boot.CommandLineRunner;
-import org.springframework.boot.WebApplicationType;
+import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.context.annotation.Bean;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @SpringBootApplication
 public class Application {
 
 	public static void main(String[] args) {
-		new SpringApplicationBuilder(Application.class).web(WebApplicationType.NONE).run(args);
+		SpringApplication.run(Application.class);
 	}
 
-	@Bean
-	public CommandLineRunner cli(ChatClient.Builder chatClientBuilder, ToolCallbackProvider tools) {
+    @RestController
+    static class ChatController {
 
-		return args -> {
-			// 2. Create the ChatClient with chat memory and RAG support
-			var chatClient = chatClientBuilder
-					.defaultSystem("You are useful assistant.") // Set the system prompt
-					.defaultToolCallbacks(tools)
-					.defaultAdvisors(new SimpleLoggerAdvisor())
-					.build();
+        private final ChatClient chatClient;
 
-			// 3. Start the chat loop
-			System.out.println("\nI am your assistant.\n");
-			try (Scanner scanner = new Scanner(System.in)) {
-				while (true) {
-					System.out.print("\nUSER: ");
-					System.out.println("\nASSISTANT: " +
-							chatClient.prompt(scanner.nextLine()) // Get the user input
-									.call()
-									.content());
-				}
-			}
-		};
-	}
+        private final ToolCallbackProvider tools;
+
+        ChatController(ChatClient.Builder chatClientBuilder, ToolCallbackProvider tools) {
+            chatClient = chatClientBuilder
+                    .defaultSystem("You are useful assistant.") // Set the system prompt
+                    // .defaultToolCallbacks(tools) // defer to LLM call since tools/list result may be different per user
+                    .defaultAdvisors(new SimpleLoggerAdvisor())
+                    .build();
+            this.tools = tools;
+        }
+
+        @GetMapping("/chat")
+        String chat(@RequestParam String message) {
+            return chatClient.prompt(message).toolCallbacks(tools).call().content();
+        }
+    }
 }
