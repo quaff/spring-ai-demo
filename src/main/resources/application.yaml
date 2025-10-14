@@ -1,12 +1,19 @@
 spring.application.name: spring-ai-demo
 
+spring.ai.model.chat: openai
+spring.ai.model.embedding: zhipuai
+
 spring.ai.openai:
   base-url: https://api.deepseek.com
-  api-key: sk-288368f95ba34154b071ecf8d0ac56f1
+  api-key: yours
   chat.options.model: deepseek-chat
 
-spring.ai.mcp.client:
-  sse:
-    connections:
-      server1:
-        url: http://localhost:8081
+spring.ai.zhipuai:
+  api-key: yours
+  embedding:
+    options:
+      model: embedding-2
+
+spring.ai.vectorstore.pgvector:
+  initialize-schema: true
+  dimensions: 1024 #embedding-2 default

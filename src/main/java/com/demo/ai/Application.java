@@ -4,7 +4,9 @@ import java.util.Scanner;
 
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
-import org.springframework.ai.tool.ToolCallbackProvider;
+import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
+import org.springframework.ai.vectorstore.SearchRequest;
+import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.WebApplicationType;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -19,14 +21,14 @@ public class Application {
 	}
 
 	@Bean
-	public CommandLineRunner cli(ChatClient.Builder chatClientBuilder, ToolCallbackProvider tools) {
+	public CommandLineRunner cli(ChatClient.Builder chatClientBuilder, VectorStore vectorStore) {
 
 		return args -> {
 			// 2. Create the ChatClient with chat memory and RAG support
 			var chatClient = chatClientBuilder
 					.defaultSystem("You are useful assistant.") // Set the system prompt
-					.defaultToolCallbacks(tools)
-					.defaultAdvisors(new SimpleLoggerAdvisor())
+					.defaultAdvisors(new SimpleLoggerAdvisor(), QuestionAnswerAdvisor.builder(vectorStore)
+                            .searchRequest(SearchRequest.builder().similarityThreshold(0.9).build()).build())
 					.build();
 
 			// 3. Start the chat loop

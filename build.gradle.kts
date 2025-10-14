@@ -13,12 +13,21 @@ java {
 
 repositories {
 	mavenCentral()
+    maven {
+        url = uri("https://repo.spring.io/snapshot")
+    }
+    maven {
+        url = uri("https://central.sonatype.com/repository/maven-snapshots")
+    }
 }
 
 dependencies {
-	implementation(platform("org.springframework.ai:spring-ai-bom:1.0.0"))
+	implementation(platform("org.springframework.ai:spring-ai-bom:1.1.0-SNAPSHOT"))
+	implementation("org.springframework.boot:spring-boot-docker-compose")
 	implementation("org.springframework.ai:spring-ai-starter-model-openai")
-	implementation("org.springframework.ai:spring-ai-starter-mcp-client-webflux")
+	implementation("org.springframework.ai:spring-ai-starter-model-zhipuai")
+	implementation("org.springframework.ai:spring-ai-starter-vector-store-pgvector")
+	implementation("org.springframework.ai:spring-ai-advisors-vector-store")
 }
 
 tasks.withType<Test> {
