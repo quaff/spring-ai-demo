@@ -26,8 +26,12 @@ dependencies {
 	implementation("org.springframework.boot:spring-boot-docker-compose")
 	implementation("org.springframework.ai:spring-ai-starter-model-openai")
 	implementation("org.springframework.ai:spring-ai-starter-model-zhipuai")
+	implementation("org.springframework.ai:spring-ai-tika-document-reader")
 	implementation("org.springframework.ai:spring-ai-starter-vector-store-pgvector")
 	implementation("org.springframework.ai:spring-ai-advisors-vector-store")
+    implementation("org.springframework.boot:spring-boot-starter-actuator")
+    implementation("io.micrometer:micrometer-tracing-bridge-otel")
+    implementation("io.opentelemetry:opentelemetry-exporter-otlp")
 }
 
 tasks.withType<Test> {

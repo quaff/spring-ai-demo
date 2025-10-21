@@ -17,3 +17,20 @@ spring.ai.zhipuai:
 spring.ai.vectorstore.pgvector:
   initialize-schema: true
   dimensions: 1024 #embedding-2 default
+
+
+management.otlp.tracing.endpoint: http://localhost:4318/v1/traces #enable OtlpHttpSpanExporter
+management.tracing.sampling.probability: 1.0 #always sampling for development
+
+spring:
+  ai:
+    chat:
+      observations:
+        log-prompt: true
+        log-completion: true
+      client:
+        observations:
+          log-prompt: true
+    vectorstore:
+      observations:
+        log-query-response: true
