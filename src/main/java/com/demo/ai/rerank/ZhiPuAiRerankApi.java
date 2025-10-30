@@ -35,39 +35,40 @@ import org.springframework.web.client.RestClient;
  */
 public class ZhiPuAiRerankApi {
 
-	private final RestClient restClient;
+    private final RestClient restClient;
 
-	/**
-	 * Create a new ZhiPuAI Rerank API with the provided base URL.
-	 * @param baseUrl the base URL for the ZhiPuAI API.
-	 * @param apiKey ZhiPuAI apiKey.
-	 * @param restClientBuilder the rest client builder to use.
-	 * @param responseErrorHandler the response error handler to use.
-	 */
-	private ZhiPuAiRerankApi(String apiKey, String baseUrl, RestClient.Builder restClientBuilder,
-                            ResponseErrorHandler responseErrorHandler) {
+    /**
+     * Create a new ZhiPuAI Rerank API with the provided base URL.
+     *
+     * @param baseUrl              the base URL for the ZhiPuAI API.
+     * @param apiKey               ZhiPuAI apiKey.
+     * @param restClientBuilder    the rest client builder to use.
+     * @param responseErrorHandler the response error handler to use.
+     */
+    private ZhiPuAiRerankApi(String apiKey, String baseUrl, RestClient.Builder restClientBuilder,
+                             ResponseErrorHandler responseErrorHandler) {
 
-		this.restClient = restClientBuilder.baseUrl(baseUrl).defaultHeaders(h -> h.setBearerAuth(apiKey)
-		).defaultStatusHandler(responseErrorHandler).build();
-	}
+        this.restClient = restClientBuilder.baseUrl(baseUrl).defaultHeaders(h -> h.setBearerAuth(apiKey)
+        ).defaultStatusHandler(responseErrorHandler).build();
+    }
 
-	public ZhiPuAiRerankResponse rerank(ZhiPuAiRerankRequest request) {
-		Assert.notNull(request, "Rerank request cannot be null.");
-		Assert.hasLength(request.query(), "Query cannot be empty.");
-		Assert.notEmpty(request.documents(), "Documents cannot be empty.");
+    public ZhiPuAiRerankResponse rerank(ZhiPuAiRerankRequest request) {
+        Assert.notNull(request, "Rerank request cannot be null.");
+        Assert.hasLength(request.query(), "Query cannot be empty.");
+        Assert.notEmpty(request.documents(), "Documents cannot be empty.");
 
         ZhiPuAiRerankResponse response = this.restClient.post()
-			.uri("/v4/rerank")
-			.body(request)
-			.retrieve()
-            .body(ZhiPuAiRerankResponse.class);
-        if (response != null && !request.returnDocuments()) {
+                .uri("/v4/rerank")
+                .body(request)
+                .retrieve()
+                .body(ZhiPuAiRerankResponse.class);
+        if (response != null && (request.returnDocuments() == null || !request.returnDocuments())) {
             // fill documents
             List<Result> results = response.results.stream().map(r -> new Result(request.documents.get(r.index), r.index, r.relevanceScore)).toList();
             return new ZhiPuAiRerankResponse(response.id, response.created, results, response.requestId, response.usage);
         }
         return response;
-	}
+    }
 
     public static Builder builder(String apiKey) {
         return new Builder(apiKey);
@@ -107,20 +108,20 @@ public class ZhiPuAiRerankApi {
         }
     }
 
-	// @formatter:off
+    // @formatter:off
 	@JsonInclude(JsonInclude.Include.NON_NULL)
 	public record ZhiPuAiRerankRequest(
-        @JsonProperty("model") String model,
 		@JsonProperty("query") String query,
 		@JsonProperty("documents") List<String> documents,
-		@JsonProperty("top_n") int topN,
-		@JsonProperty("return_documents") boolean returnDocuments,
-		@JsonProperty("return_raw_scores") boolean returnRawScores,
+        @JsonProperty("model") String model,
+		@JsonProperty("top_n") Integer topN,
+		@JsonProperty("return_documents") Boolean returnDocuments,
+		@JsonProperty("return_raw_scores") Boolean returnRawScores,
         @JsonProperty("request_id") String requestId,
 		@JsonProperty("user_id") String userId) {
 
 		public ZhiPuAiRerankRequest(String query, List<String> documents) {
-			this("rerank", query, documents, 0, false, false, null, null);
+			this(query, documents,"rerank", null, null, null, null, null);
 		}
 	}
 
