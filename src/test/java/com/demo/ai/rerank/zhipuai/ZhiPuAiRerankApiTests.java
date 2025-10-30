@@ -1,5 +1,6 @@
-package com.demo.ai.rerank;
+package com.demo.ai.rerank.zhipuai;
 
+import com.demo.ai.rerank.zhipuai.zhipuai.ZhiPuAiRerankApi;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

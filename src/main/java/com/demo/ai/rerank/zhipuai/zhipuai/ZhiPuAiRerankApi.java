@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.demo.ai.rerank;
+package com.demo.ai.rerank.zhipuai.zhipuai;
 
 import java.util.List;
 

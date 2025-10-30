@@ -1,4 +1,6 @@
-package com.demo.ai.rerank;
+package com.demo.ai.rerank.zhipuai.zhipuai;
+
+import com.demo.ai.rerank.*;
 
 public class ZhiPuAiRerankModel implements RerankModel {
 
