@@ -5,13 +5,13 @@ import java.util.Scanner;
 
 import jakarta.annotation.PostConstruct;
 import org.springframework.ai.chat.client.ChatClient;
-import org.springframework.ai.chat.client.advisor.SimpleLoggerAdvisor;
-import org.springframework.ai.chat.client.advisor.vectorstore.QuestionAnswerAdvisor;
+import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.rag.advisor.RetrievalAugmentationAdvisor;
+import org.springframework.ai.rag.retrieval.search.VectorStoreDocumentRetriever;
 import org.springframework.ai.reader.tika.TikaDocumentReader;
 import org.springframework.ai.transformer.splitter.TextSplitter;
 import org.springframework.ai.transformer.splitter.TokenTextSplitter;
-import org.springframework.ai.vectorstore.SearchRequest;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
@@ -49,11 +49,17 @@ public class Application {
 	public CommandLineRunner cli(ChatClient.Builder chatClientBuilder, VectorStore vectorStore) {
 
 		return args -> {
+
+            Advisor retrievalAugmentationAdvisor = RetrievalAugmentationAdvisor.builder()
+                    .documentRetriever(VectorStoreDocumentRetriever.builder()
+                            .vectorStore(vectorStore)
+                            .build())
+                    .build();
+
 			// 2. Create the ChatClient with chat memory and RAG support
 			var chatClient = chatClientBuilder
 					.defaultSystem("You are useful assistant.") // Set the system prompt
-					.defaultAdvisors(new SimpleLoggerAdvisor(), QuestionAnswerAdvisor.builder(vectorStore)
-                            .searchRequest(SearchRequest.builder().build()).build())
+					.defaultAdvisors(retrievalAugmentationAdvisor)
 					.build();
 
 			// 3. Start the chat loop
