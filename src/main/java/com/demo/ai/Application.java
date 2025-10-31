@@ -1,13 +1,19 @@
 package com.demo.ai;
 
 import java.util.List;
+import java.util.Objects;
 import java.util.Scanner;
 
+import com.demo.ai.rerank.*;
+import com.demo.ai.rerank.zhipuai.zhipuai.ZhiPuAiRerankApi;
+import com.demo.ai.rerank.zhipuai.zhipuai.ZhiPuAiRerankModel;
 import jakarta.annotation.PostConstruct;
 import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.ai.chat.client.advisor.api.Advisor;
 import org.springframework.ai.document.Document;
+import org.springframework.ai.model.zhipuai.autoconfigure.ZhiPuAiConnectionProperties;
 import org.springframework.ai.rag.advisor.RetrievalAugmentationAdvisor;
+import org.springframework.ai.rag.postretrieval.document.DocumentPostProcessor;
 import org.springframework.ai.rag.retrieval.search.VectorStoreDocumentRetriever;
 import org.springframework.ai.reader.tika.TikaDocumentReader;
 import org.springframework.ai.transformer.splitter.TextSplitter;
@@ -26,9 +32,9 @@ import org.springframework.jdbc.core.simple.JdbcClient;
 @SpringBootApplication
 public class Application {
 
-	public static void main(String[] args) {
-		new SpringApplicationBuilder(Application.class).web(WebApplicationType.NONE).run(args);
-	}
+    public static void main(String[] args) {
+        new SpringApplicationBuilder(Application.class).web(WebApplicationType.NONE).run(args);
+    }
 
     @Autowired
     private ApplicationContext context;
@@ -45,34 +51,52 @@ public class Application {
         }
     }
 
-	@Bean
-	public CommandLineRunner cli(ChatClient.Builder chatClientBuilder, VectorStore vectorStore) {
+    @Bean
+    public CommandLineRunner cli(ChatClient.Builder chatClientBuilder, VectorStore vectorStore, List<DocumentPostProcessor> documentPostProcessors) {
 
-		return args -> {
+        return args -> {
 
             Advisor retrievalAugmentationAdvisor = RetrievalAugmentationAdvisor.builder()
                     .documentRetriever(VectorStoreDocumentRetriever.builder()
                             .vectorStore(vectorStore)
                             .build())
+                    .documentPostProcessors(documentPostProcessors)
                     .build();
 
-			// 2. Create the ChatClient with chat memory and RAG support
-			var chatClient = chatClientBuilder
-					.defaultSystem("You are useful assistant.") // Set the system prompt
-					.defaultAdvisors(retrievalAugmentationAdvisor)
-					.build();
+            // 2. Create the ChatClient with chat memory and RAG support
+            var chatClient = chatClientBuilder
+                    .defaultSystem("You are useful assistant.") // Set the system prompt
+                    .defaultAdvisors(retrievalAugmentationAdvisor)
+                    .build();
 
-			// 3. Start the chat loop
-			System.out.println("\nI am your assistant.\n");
-			try (Scanner scanner = new Scanner(System.in)) {
-				while (true) {
-					System.out.print("\nUSER: ");
-					System.out.println("\nASSISTANT: " +
-							chatClient.prompt(scanner.nextLine()) // 谁是获得最优价值球员的国际球员？
-									.call()
-									.content());
-				}
-			}
-		};
-	}
+            // 3. Start the chat loop
+            System.out.println("\nI am your assistant.\n");
+            try (Scanner scanner = new Scanner(System.in)) {
+                while (true) {
+                    System.out.print("\nUSER: ");
+                    System.out.println("\nASSISTANT: " +
+                            chatClient.prompt(scanner.nextLine()) // 谁是获得最优价值球员的国际球员？
+                                    .call()
+                                    .content());
+                }
+            }
+        };
+    }
+
+    @Bean
+    ZhiPuAiRerankModel zhiPuAiRerankModel(ZhiPuAiConnectionProperties commonProperties) {
+        ZhiPuAiRerankApi api = ZhiPuAiRerankApi.builder(commonProperties.getApiKey()).build();
+        return new ZhiPuAiRerankModel(api);
+    }
+
+    @Bean
+    DocumentPostProcessor rerankDocumentPostProcessor(ZhiPuAiRerankModel zhiPuAiRerankModel) {
+        return (query, documents) -> {
+            RerankRequest request = new RerankRequest(
+                    new RerankInput(query.text(), documents.stream().map(Document::getText).toList()),
+                    RerankOptions.builder().model("rerank").topN(2).build());
+            return zhiPuAiRerankModel.call(request).getResult().getOutput().documents()
+                    .stream().map(s -> documents.stream().filter(d -> s.equals(d.getText())).findFirst().orElse(null)).filter(Objects::nonNull).toList();
+        };
+    }
 }
